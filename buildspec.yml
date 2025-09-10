@@ -1,1 +1,29 @@
 
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      docker: 20  # Required by Sonarless to run SonarQube Docker container
+    commands:
+      - echo Installing Sonarless CLI...
+      - curl -sSfL https://raw.githubusercontent.com/gitricko/sonarless/main/install.sh | bash
+      - sonarless --version
+
+  pre_build:
+    commands:
+      - echo Preparing for Sonarless scan...
+
+  build:
+    commands:
+      - echo Running Sonarless scan...
+      - sonarless scan
+      - echo Sonarless scan completed successfully.
+
+  post_build:
+    commands:
+      - echo Post-build steps (if any)...
+
+artifacts:
+  files:
+    - '**/*'
