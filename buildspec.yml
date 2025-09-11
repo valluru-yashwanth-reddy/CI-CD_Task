@@ -1,38 +1,39 @@
 version: 0.2
+
 phases:
   install:
     runtime-versions:
       nodejs: 18
     commands:
-      - echo "Installing Sonar Scanner..."
-      - curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
-      - unzip -q sonar-scanner.zip -d /opt
-      - export PATH=$PATH:/opt/sonar-scanner-*/bin
-      - sonar-scanner --version
+      - echo "Installing NPM dependencies..."
+      - npm cache clean --force
+      - npm install --verbose
       - echo "Installing SonarLess..."
       - curl -fsSL https://raw.githubusercontent.com/gitricko/sonarless/main/install.sh | bash
-      
+
   pre_build:
     commands:
       - echo "Pre-build phase..."
+
   build:
     commands:
-      - echo "Build phase..."
-      - npm install
-      - npm run build
-      - echo "Running SonarScanner analysis..."
-      - sonar-scanner
-      - echo "Running SonarLess scan..."
+      - echo "Verifying SonarLess installation..."
       - sonarless --version || sonarless --help || { echo "SonarLess not installed"; exit 1; }
+      - echo "Running SonarLess scan..."
       - sonarless scan
+      - echo "Building React app..."
+      - npm run build
+
   post_build:
     commands:
       - echo "Build completed at `date`"
+
 artifacts:
   files:
     - '**/*'
   base-directory: 'build'
   discard-paths: yes
+
 cache:
   paths:
     - 'node_modules/**/*'
