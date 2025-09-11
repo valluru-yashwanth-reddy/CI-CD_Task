@@ -5,28 +5,30 @@ phases:
     runtime-versions:
       nodejs: 18
     commands:
-      - set -euo pipefail
-      - echo "Vendoring SonarLess CLI script..." 
-      - mkdir -p "$PWD/.tools"
-      - curl -fsSL https://raw.githubusercontent.com/gitricko/sonarless/main/makefile.sh -o "$PWD/.tools/sonarless"
-      - chmod +x "$PWD/.tools/sonarless"
-      - export PATH="$PWD/.tools:$PATH"
-      - echo "Verifying SonarLess availability..."
-      - sonarless --help || sonarless -h || { echo "SonarLess not available on PATH"; ls -la "$PWD/.tools"; echo "PATH: $PATH"; exit 1; }
-
+      - 'set -euo pipefail'
+      - 'echo Installing dependencies...'
+      - 'npm ci --verbose || npm install --legacy-peer-deps --verbose'
+      - 'echo Installing SonarLess...'
+      - 'mkdir -p .tools'
+      - 'curl -fsSL https://raw.githubusercontent.com/gitricko/sonarless/main/makefile.sh -o ./.tools/sonarless'
+      - 'chmod +x ./.tools/sonarless'
+      - 'echo Verifying SonarLess availability...'
+      - './.tools/sonarless --help || ./.tools/sonarless -h'
   pre_build:
     commands:
-      - echo "Preparing for SonarLess scan..."
-
+      - 'echo Pre-build phase...'
   build:
     commands:
-      - echo "Running SonarLess scan (gate)..."
-      - sonarless scan
-
+      - 'echo Building React app...'
+      - 'npm run build'
+      - 'echo Running SonarLess scan (gate)...'
+      - './.tools/sonarless scan'
   post_build:
     commands:
-      - echo "Post-build steps..."
+      - 'echo Build completed at `date`'
 
 artifacts:
   files:
     - '**/*'
+  base-directory: 'build'
+  discard-paths: yes
