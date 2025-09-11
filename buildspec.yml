@@ -1,29 +1,33 @@
-
 version: 0.2
 
 phases:
   install:
     runtime-versions:
-      docker: 20  # Required by Sonarless to run SonarQube Docker container
+      nodejs: 16
     commands:
-      - echo Installing Sonarless CLI...
-      - curl -sSfL https://raw.githubusercontent.com/gitricko/sonarless/main/install.sh | bash
-      - sonarless --version
-
+      - echo Installing NPM dependencies...
+      - npm install
   pre_build:
     commands:
-      - echo Preparing for Sonarless scan...
-
+      - echo Pre-build checks...
   build:
     commands:
-      - echo Running Sonarless scan...
+      - echo Building React app...
+      - npm run build
+      - echo Installing SonarLess...
+      - curl -fsSL https://raw.githubusercontent.com/gitricko/sonarless/main/install.sh | bash
+      - echo Checking SonarLess installation...
+      - sonarless --version || sonarless --help || { echo "SonarLess not installed"; exit 1; }
+      - echo Running SonarLess scan...
       - sonarless scan
-      - echo Sonarless scan completed successfully.
-
   post_build:
     commands:
-      - echo Post-build steps (if any)...
-
+      - echo Build completed at `date`
 artifacts:
   files:
     - '**/*'
+  base-directory: 'build'
+  discard-paths: yes
+cache:
+  paths:
+    - 'node_modules/**/*'
