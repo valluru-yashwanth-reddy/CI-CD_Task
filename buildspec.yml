@@ -1,30 +1,65 @@
 version: 0.2
- 
+
 phases:
   install:
     runtime-versions:
       nodejs: 18
     commands:
-      - echo "Installing Sonarless CLI..."
-      - curl -sSfL https://raw.githubusercontent.com/gitricko/sonarless/main/install.sh | bash
-      # Ensure sonarless is in PATH
-      - export PATH=$PATH:$HOME/.local/bin
+      - set -euo pipefail
+      - echo "Installing SonarLess..."
+      # IMPORTANT: use a plain URL, not [markdown] link syntax
+      - curl -fsSL https://raw.githubusercontent.com/gitricko/sonarless/main/install.sh -o /tmp/sonarless-install.sh
+      - bash /tmp/sonarless-install.sh
+
+      # Discover where sonarless was installed and ensure it's on PATH
+      - echo "Discovering sonarless binary path..."
+      - |
+        CANDIDATES=(
+          "$HOME/.local/bin/sonarless"
+          "$HOME/.sonarless/bin/sonarless"
+          "/usr/local/bin/sonarless"
+          "/usr/bin/sonarless"
+        )
+        FOUND=""
+        for p in "${CANDIDATES[@]}"; do
+          if [ -x "$p" ]; then
+            FOUND="$p"
+            break
+          fi
+        done
+        if [ -z "${FOUND}" ]; then
+          # Last resort: try command -v in case installer added it differently
+          if command -v sonarless >/dev/null 2>&1; then
+            FOUND="$(command -v sonarless)"
+          fi
+        fi
+        if [ -z "${FOUND}" ]; then
+          echo "ERROR: sonarless binary not found after install"
+          echo "PATH was: $PATH"
+          echo "Listing likely dirs:"
+          ls -la "$HOME/.local/bin" || true
+          ls -la "$HOME/.sonarless/bin" || true
+          exit 1
+        fi
+        echo "sonarless found at: ${FOUND}"
+        DIR="$(dirname "$FOUND")"
+        export PATH="$DIR:$PATH"
+        echo "PATH updated to include ${DIR}"
+      - echo "Checking SonarLess version..."
       - sonarless --version
- 
+
   pre_build:
     commands:
-      - echo "Preparing for Sonarless scan..."
- 
+      - echo "Preparing for SonarLess scan..."
+
   build:
     commands:
-      - echo "Running Sonarless scan..."
+      - echo "Running SonarLess scan (gate)..."
       - sonarless scan
-      - echo "Sonarless scan completed successfully."
- 
+
   post_build:
     commands:
-      - echo "Post-build steps (if any)..."
- 
+      - echo "Post-build steps..."
 artifacts:
   files:
     - '**/*'
