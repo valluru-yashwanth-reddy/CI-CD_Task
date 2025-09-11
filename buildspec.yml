@@ -5,8 +5,10 @@ phases:
     runtime-versions:
       nodejs: 16
     commands:
+      - echo Cleaning npm cache...
+      - npm cache clean --force
       - echo Installing NPM dependencies...
-      - npm install
+      - npm install --verbose
   pre_build:
     commands:
       - echo Pre-build checks...
