@@ -11,6 +11,7 @@ phases:
       - sonar-scanner --version
       - echo "Installing SonarLess..."
       - curl -fsSL https://raw.githubusercontent.com/gitricko/sonarless/main/install.sh | bash
+      
   pre_build:
     commands:
       - echo "Pre-build phase..."
