@@ -7,44 +7,26 @@ phases:
     commands:
       - set -euo pipefail
       - echo "Installing SonarLess..."
-      # IMPORTANT: use a plain URL, not [markdown] link syntax
       - curl -fsSL https://raw.githubusercontent.com/gitricko/sonarless/main/install.sh -o /tmp/sonarless-install.sh
       - bash /tmp/sonarless-install.sh
 
-      # Discover where sonarless was installed and ensure it's on PATH
-      - echo "Discovering sonarless binary path..."
+      # Make the installed script executable and expose it on PATH
+      - echo "Linking SonarLess to a real binary path..."
       - |
-        CANDIDATES=(
-          "$HOME/.local/bin/sonarless"
-          "$HOME/.sonarless/bin/sonarless"
-          "/usr/local/bin/sonarless"
-          "/usr/bin/sonarless"
-        )
-        FOUND=""
-        for p in "${CANDIDATES[@]}"; do
-          if [ -x "$p" ]; then
-            FOUND="$p"
-            break
-          fi
-        done
-        if [ -z "${FOUND}" ]; then
-          # Last resort: try command -v in case installer added it differently
-          if command -v sonarless >/dev/null 2>&1; then
-            FOUND="$(command -v sonarless)"
-          fi
+        if [ -f "$HOME/.sonarless/makefile.sh" ]; then
+          chmod +x "$HOME/.sonarless/makefile.sh"
+          ln -sf "$HOME/.sonarless/makefile.sh" /usr/local/bin/sonarless || true
+          ln -sf "$HOME/.sonarless/makefile.sh" "$HOME/.local/bin/sonarless" || true
+          export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
         fi
-        if [ -z "${FOUND}" ]; then
-          echo "ERROR: sonarless binary not found after install"
-          echo "PATH was: $PATH"
-          echo "Listing likely dirs:"
+        if ! command -v sonarless >/dev/null 2>&1; then
+          echo "ERROR: sonarless binary not found after install; printing directories..."
+          echo "PATH: $PATH"
+          ls -la "$HOME/.sonarless" || true
           ls -la "$HOME/.local/bin" || true
-          ls -la "$HOME/.sonarless/bin" || true
+          ls -la /usr/local/bin || true
           exit 1
         fi
-        echo "sonarless found at: ${FOUND}"
-        DIR="$(dirname "$FOUND")"
-        export PATH="$DIR:$PATH"
-        echo "PATH updated to include ${DIR}"
       - echo "Checking SonarLess version..."
       - sonarless --version
 
