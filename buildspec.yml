@@ -4,7 +4,8 @@ phases:
   install:
     runtime-versions:
       nodejs: 18
-    commands:
+    commands:Latest action execution message
+Build terminated with state: FAILED. Phase: INSTALL, Code: COMMAND_EXECUTION_ERROR, Message: Error while executing command: npm ci --verbose || npm install --legacy-peer-deps --verbose. Reason: exit status 254
       - 'set -euo pipefail'
       - 'echo Installing dependencies...'
       - 'npm ci --verbose || npm install --legacy-peer-deps --verbose'
