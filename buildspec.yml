@@ -5,9 +5,12 @@ phases:
     runtime-versions:
       nodejs: 18
     commands:
-      - echo "Installing NPM dependencies..."
+      - echo "Node version:" && node -v
+      - echo "NPM version:" && npm -v
+      - echo "Cleaning npm cache..."
       - npm cache clean --force
-      - npm install --verbose
+      - echo "Installing dependencies (prefer lockfile with npm ci)..."
+      - npm ci --verbose || npm install --legacy-peer-deps --verbose
       - echo "Installing SonarLess..."
       - curl -fsSL https://raw.githubusercontent.com/gitricko/sonarless/main/install.sh | bash
 
@@ -17,12 +20,12 @@ phases:
 
   build:
     commands:
-      - echo "Verifying SonarLess installation..."
-      - sonarless --version || sonarless --help || { echo "SonarLess not installed"; exit 1; }
-      - echo "Running SonarLess scan..."
-      - sonarless scan
       - echo "Building React app..."
       - npm run build
+      - echo "Verifying SonarLess installation..."
+      - sonarless --version || sonarless --help || { echo "SonarLess not installed"; exit 1; }
+      - echo "Running SonarLess scan (gate)..."
+      - sonarless scan
 
   post_build:
     commands:
