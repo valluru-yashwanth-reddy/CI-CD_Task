@@ -6,40 +6,13 @@ phases:
       nodejs: 18
     commands:
       - set -euo pipefail
-      - echo "Installing SonarLess..."
-      - curl -fsSL https://raw.githubusercontent.com/gitricko/sonarless/main/install.sh -o /tmp/sonarless-install.sh
-      - bash /tmp/sonarless-install.sh
-
-      - echo "Locating SonarLess and wiring PATH..."
+      - echo "Vendoring SonarLess CLI script..." 
       - mkdir -p "$PWD/.tools"
-      - |
-        FOUND=""
-        # Try common user install locations created by curl installers
-        for p in "$HOME/.local/bin/sonarless" "$HOME/.sonarless/sonarless" "$HOME/.sonarless/makefile.sh" "$HOME/bin/sonarless"; do
-          if [ -x "$p" ]; then FOUND="$p"; break; fi
-        done
-        # Fallback to PATH discovery if installer already placed a binary
-        if [ -z "$FOUND" ] && command -v sonarless >/dev/null 2>&1; then
-          FOUND="$(command -v sonarless)"
-        fi
-        # If we found a script but it's not named 'sonarless', wrap it
-        if [ -n "$FOUND" ]; then
-          echo "#!/usr/bin/env bash" > "$PWD/.tools/sonarless"
-          echo "set -e" >> "$PWD/.tools/sonarless"
-          echo "\"$FOUND\" \"\$@\"" >> "$PWD/.tools/sonarless"
-          chmod +x "$PWD/.tools/sonarless"
-          export PATH="$PWD/.tools:$HOME/.local/bin:$PATH"
-        else
-          echo "ERROR: sonarless binary not found after install"
-          echo "PATH was: $PATH"
-          echo "Listing likely dirs for diagnostics:"
-          ls -la "$HOME/.local/bin" || true
-          ls -la "$HOME/.sonarless" || true
-          ls -la "$HOME/bin" || true
-          exit 1
-        fi
-      - echo "Checking SonarLess version..."
-      - sonarless --version
+      - curl -fsSL https://raw.githubusercontent.com/gitricko/sonarless/main/makefile.sh -o "$PWD/.tools/sonarless"
+      - chmod +x "$PWD/.tools/sonarless"
+      - export PATH="$PWD/.tools:$PATH"
+      - echo "Verifying SonarLess availability..."
+      - sonarless --help || sonarless -h || { echo "SonarLess not available on PATH"; ls -la "$PWD/.tools"; echo "PATH: $PATH"; exit 1; }
 
   pre_build:
     commands:
