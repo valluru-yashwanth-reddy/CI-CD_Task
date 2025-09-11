@@ -1,42 +1,30 @@
 version: 0.2
-
+ 
 phases:
   install:
     runtime-versions:
       nodejs: 18
     commands:
-      - echo "Node version:" && node -v
-      - echo "NPM version:" && npm -v
-      - echo "Cleaning npm cache..."
-      - npm cache clean --force
-      - echo "Installing dependencies (prefer lockfile with npm ci)..."
-      - npm ci --verbose || npm install --legacy-peer-deps --verbose
-      - echo "Installing SonarLess..."
-      - curl -fsSL https://raw.githubusercontent.com/gitricko/sonarless/main/install.sh | bash
-
+      - echo "Installing Sonarless CLI..."
+      - curl -sSfL https://raw.githubusercontent.com/gitricko/sonarless/main/install.sh | bash
+      # Ensure sonarless is in PATH
+      - export PATH=$PATH:$HOME/.local/bin
+      - sonarless --version
+ 
   pre_build:
     commands:
-      - echo "Pre-build phase..."
-
+      - echo "Preparing for Sonarless scan..."
+ 
   build:
     commands:
-      - echo "Building React app..."
-      - npm run build
-      - echo "Verifying SonarLess installation..."
-      - sonarless --version || sonarless --help || { echo "SonarLess not installed"; exit 1; }
-      - echo "Running SonarLess scan (gate)..."
+      - echo "Running Sonarless scan..."
       - sonarless scan
-
+      - echo "Sonarless scan completed successfully."
+ 
   post_build:
     commands:
-      - echo "Build completed at `date`"
-
+      - echo "Post-build steps (if any)..."
+ 
 artifacts:
   files:
     - '**/*'
-  base-directory: 'build'
-  discard-paths: yes
-
-cache:
-  paths:
-    - 'node_modules/**/*'
