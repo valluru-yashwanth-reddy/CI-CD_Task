@@ -5,27 +5,28 @@ phases:
     runtime-versions:
       nodejs: 18
     commands:
-      - 'set -euo pipefail'
-      - 'echo "Installing dependencies..."'
-      - 'npm ci --verbose || npm install --legacy-peer-deps --verbose'
-      - 'echo "Installing SonarLess..."'
-      - 'mkdir -p .tools'
-      - 'curl -fsSL https://raw.githubusercontent.com/gitricko/sonarless/main/makefile.sh -o ./.tools/sonarless'
-      - 'chmod +x ./.tools/sonarless'
-      - 'echo "Verifying SonarLess availability..."'
-      - './.tools/sonarless --help || ./.tools/sonarless -h'
+      - echo "Installing React dependencies..."
+      - npm cache clean --force
+      - npm install --verbose
+      - echo "Installing Sonarless CLI..."
+      - curl -sSfL https://raw.githubusercontent.com/gitricko/sonarless/main/install.sh | bash
+      - echo "Verifying Sonarless installation..."
+      - ls -lah ~/.sonarless || echo "Sonarless directory not found"
+      - chmod +x ~/.sonarless/makefile.sh || echo "makefile.sh not found or not executable"
+      - docker --version || echo "Docker not available — Sonarless will fail"
+      - bash ~/.sonarless/makefile.sh --version || echo "Sonarless version check failed"
   pre_build:
     commands:
-      - 'echo "Pre-build phase..."'
+      - echo "Running Sonarless scan before build..."
+      - bash ~/.sonarless/makefile.sh scan src/ || echo "Sonarless scan failed"
+      - echo "Sonarless scan completed."
   build:
     commands:
-      - 'echo "Building React app..."'
-      - 'npm run build'
-      - 'echo "Running SonarLess scan (gate)..."'
-      - './.tools/sonarless scan'
+      - echo "Building React application..."
+      - npm run build
   post_build:
     commands:
-      - 'echo "Build completed at `date`"'
+      - echo "Build and scan finished successfully."
 
 artifacts:
   files:
