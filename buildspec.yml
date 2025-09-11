@@ -10,21 +10,32 @@ phases:
       - curl -fsSL https://raw.githubusercontent.com/gitricko/sonarless/main/install.sh -o /tmp/sonarless-install.sh
       - bash /tmp/sonarless-install.sh
 
-      # Make the installed script executable and expose it on PATH
-      - echo "Linking SonarLess to a real binary path..."
+      - echo "Locating SonarLess and wiring PATH..."
+      - mkdir -p "$PWD/.tools"
       - |
-        if [ -f "$HOME/.sonarless/makefile.sh" ]; then
-          chmod +x "$HOME/.sonarless/makefile.sh"
-          ln -sf "$HOME/.sonarless/makefile.sh" /usr/local/bin/sonarless || true
-          ln -sf "$HOME/.sonarless/makefile.sh" "$HOME/.local/bin/sonarless" || true
-          export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"
+        FOUND=""
+        # Try common user install locations created by curl installers
+        for p in "$HOME/.local/bin/sonarless" "$HOME/.sonarless/sonarless" "$HOME/.sonarless/makefile.sh" "$HOME/bin/sonarless"; do
+          if [ -x "$p" ]; then FOUND="$p"; break; fi
+        done
+        # Fallback to PATH discovery if installer already placed a binary
+        if [ -z "$FOUND" ] && command -v sonarless >/dev/null 2>&1; then
+          FOUND="$(command -v sonarless)"
         fi
-        if ! command -v sonarless >/dev/null 2>&1; then
-          echo "ERROR: sonarless binary not found after install; printing directories..."
-          echo "PATH: $PATH"
-          ls -la "$HOME/.sonarless" || true
+        # If we found a script but it's not named 'sonarless', wrap it
+        if [ -n "$FOUND" ]; then
+          echo "#!/usr/bin/env bash" > "$PWD/.tools/sonarless"
+          echo "set -e" >> "$PWD/.tools/sonarless"
+          echo "\"$FOUND\" \"\$@\"" >> "$PWD/.tools/sonarless"
+          chmod +x "$PWD/.tools/sonarless"
+          export PATH="$PWD/.tools:$HOME/.local/bin:$PATH"
+        else
+          echo "ERROR: sonarless binary not found after install"
+          echo "PATH was: $PATH"
+          echo "Listing likely dirs for diagnostics:"
           ls -la "$HOME/.local/bin" || true
-          ls -la /usr/local/bin || true
+          ls -la "$HOME/.sonarless" || true
+          ls -la "$HOME/bin" || true
           exit 1
         fi
       - echo "Checking SonarLess version..."
@@ -42,6 +53,7 @@ phases:
   post_build:
     commands:
       - echo "Post-build steps..."
+
 artifacts:
   files:
     - '**/*'
