@@ -4,32 +4,35 @@ phases:
   install:
     runtime-versions:
       nodejs: 18
-    commands:Latest action execution message
-Build terminated with state: FAILED. Phase: INSTALL, Code: COMMAND_EXECUTION_ERROR, Message: Error while executing command: npm ci --verbose || npm install --legacy-peer-deps --verbose. Reason: exit status 254
+    commands:
       - 'set -euo pipefail'
-      - 'echo Installing dependencies...'
+      - 'echo "Installing dependencies..."'
       - 'npm ci --verbose || npm install --legacy-peer-deps --verbose'
-      - 'echo Installing SonarLess...'
+      - 'echo "Installing SonarLess..."'
       - 'mkdir -p .tools'
       - 'curl -fsSL https://raw.githubusercontent.com/gitricko/sonarless/main/makefile.sh -o ./.tools/sonarless'
       - 'chmod +x ./.tools/sonarless'
-      - 'echo Verifying SonarLess availability...'
+      - 'echo "Verifying SonarLess availability..."'
       - './.tools/sonarless --help || ./.tools/sonarless -h'
   pre_build:
     commands:
-      - 'echo Pre-build phase...'
+      - 'echo "Pre-build phase..."'
   build:
     commands:
-      - 'echo Building React app...'
+      - 'echo "Building React app..."'
       - 'npm run build'
-      - 'echo Running SonarLess scan (gate)...'
+      - 'echo "Running SonarLess scan (gate)..."'
       - './.tools/sonarless scan'
   post_build:
     commands:
-      - 'echo Build completed at `date`'
+      - 'echo "Build completed at `date`"'
 
 artifacts:
   files:
     - '**/*'
   base-directory: 'build'
   discard-paths: yes
+
+cache:
+  paths:
+    - 'node_modules/**/*'
